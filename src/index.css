@@ -1,0 +1,103 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    font-family: 'Padauk', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+}
+
+/* Light Theme Enhancements: Crisp, High-Contrast, Eye-Friendly */
+.theme-light {
+  background-color: #f8fafc;
+  color: #0f172a;
+}
+
+/* Sepia Theme: Classical Scripture Parchment & Espresso Ink */
+.theme-sepia {
+  background-color: #fcf6ea !important;
+  color: #2d1808 !important;
+}
+
+.theme-sepia .bg-surface-card {
+  background-color: #f7eedb !important;
+  border-color: #ebd7b5 !important;
+}
+
+.theme-sepia .bg-surface-elevated {
+  background-color: #f3e3c8 !important;
+  border-color: #e2cba6 !important;
+}
+
+.theme-sepia .text-reading-main {
+  color: #261405 !important;
+}
+
+.theme-sepia .text-reading-sub {
+  color: #5c381c !important;
+}
+
+.theme-sepia .text-reading-title {
+  color: #6b2609 !important;
+}
+
+.theme-sepia .scripture-quote-box {
+  background-color: #f4e5cb !important;
+  border-left-color: #b45309 !important;
+  color: #381e09 !important;
+}
+
+.theme-sepia .cross-link-badge {
+  background-color: #ebd6b5 !important;
+  color: #7c2d12 !important;
+  border-color: #d7b587 !important;
+}
+
+/* Dark Theme: Midnight Navy & Luminescent Soft-White Text */
+.dark {
+  background-color: #0b0f17;
+  color: #f1f5f9;
+}
+
+.dark .bg-surface-card {
+  background-color: #131b2a;
+  border-color: #243046;
+}
+
+.dark .bg-surface-elevated {
+  background-color: #1c263b;
+  border-color: #2f3d59;
+}
+
+.dark .text-reading-main {
+  color: #f1f5f9;
+}
+
+.dark .text-reading-sub {
+  color: #94a3b8;
+}
+
+.dark .text-reading-title {
+  color: #a5b4fc;
+}
+
+.dark .scripture-quote-box {
+  background-color: #162033;
+  border-left-color: #6366f1;
+  color: #e2e8f0;
+}
+
+/* Clean Cross-links Styling */
+.cross-link-btn {
+  display: inline-flex;
+  align-items: center;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  padding: 0 4px;
+  border-radius: 4px;
+  transition: all 0.15s ease-in-out;
+}

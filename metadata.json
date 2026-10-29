@@ -1,0 +1,6 @@
+{
+  "name": "Myanmar Bible Dictionary - မြန်မာ သမ္မာကျမ်းစာ အဘိဓာန်",
+  "description": "ပြည့်စုံသော မြန်မာ သမ္မာကျမ်းစာ အဘိဓာန်နှင့် လေ့လာရှာဖွေရေးဆော့ဖ်ဝဲ - Comprehensive Myanmar Bible Dictionary with Auto-Linking, Audio, and Realtime Cloud Database.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

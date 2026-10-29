@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="my" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>မြန်မာ သမ္မာကျမ်းစာ အဘိဓာန်</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            sepia: {
+              50: '#fbf0d9',
+              100: '#f7e3bc',
+              200: '#efc985',
+              800: '#432c0d',
+              900: '#2d1d07',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Google Fonts (Padauk & Inter) -->
+  <link href="https://fonts.googleapis.com/css2?family=Padauk:wght@400;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    body {
+      font-family: 'Padauk', 'Inter', sans-serif;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+    
+    /* Cross-linking highlight styling */
+    .cross-link {
+      color: #4f46e5;
+      font-weight: 700;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      cursor: pointer;
+      padding: 0 4px;
+      border-radius: 4px;
+      background-color: #eef2ff;
+      transition: all 0.2s ease;
+    }
+    .cross-link:hover {
+      color: #3730a3;
+      background-color: #c7d2fe;
+    }
+
+    /* Theme specific cross-link tweaks */
+    .dark .cross-link {
+      color: #818cf8;
+      background-color: #312e81;
+    }
+    .dark .cross-link:hover {
+      color: #a5b4fc;
+      background-color: #4338ca;
+    }
+
+    .theme-sepia .cross-link {
+      color: #9a3412;
+      background-color: #fde8d0;
+    }
+
+    /* Sepia Theme Classes */
+    .theme-sepia {
+      background-color: #fbf0d9 !important;
+      color: #432c0d !important;
+    }
+    .theme-sepia .bg-card {
+      background-color: #f4e4c1 !important;
+      border-color: #e6d0a3 !important;
+    }
+    .theme-sepia .bg-header {
+      background: linear-gradient(to right, #78350f, #451a03) !important;
+    }
+    .theme-sepia .text-main {
+      color: #432c0d !important;
+    }
+    .theme-sepia .text-sub {
+      color: #78350f !important;
+    }
+  </style>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+</head>
+<body id="appBody" class="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col antialiased">
+
+  <!-- Header Navigation -->
+  <header class="bg-header bg-gradient-to-r from-indigo-900 via-indigo-800 to-slate-900 text-white shadow-xl sticky top-0 z-30">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 py-3.5 flex justify-between items-center">
+      <div class="flex items-center space-x-3 cursor-pointer group" onclick="resetSearch()">
+        <div class="w-10 h-10 rounded-xl bg-amber-400 text-slate-900 flex items-center justify-center font-bold text-xl shadow-lg group-hover:scale-105 transition transform">
+          <i class="fa-solid fa-book-bible"></i>
+        </div>
+        <div>
+          <h1 class="text-lg sm:text-xl font-bold tracking-wide">ကျမ်းစာအဘိဓာန်</h1>
+          <p class="text-xs text-indigo-200 hidden sm:block">Myanmar Bible Dictionary</p>
+        </div>
+      </div>
+      
+      <!-- Controls (Theme Switcher + Admin Login) -->
+      <div class="flex items-center gap-2">
+        
+        <!-- Theme Controls Toggle Menu -->
+        <div class="relative inline-block text-left">
+          <div class="flex bg-indigo-950/70 p-1 rounded-xl border border-indigo-500/30">
+            <button onclick="setTheme('light')" id="btnThemeLight" class="p-1.5 px-2 text-xs rounded-lg transition" title="Light Mode">
+              <i class="fa-solid fa-sun text-amber-400"></i>
+            </button>
+            <button onclick="setTheme('dark')" id="btnThemeDark" class="p-1.5 px-2 text-xs rounded-lg transition" title="Dark Mode">
+              <i class="fa-solid fa-moon text-slate-300"></i>
+            </button>
+            <button onclick="setTheme('sepia')" id="btnThemeSepia" class="p-1.5 px-2 text-xs rounded-lg transition" title="Reading Mode (Sepia)">
+              <i class="fa-solid fa-book-open text-amber-200"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Offline Badge Indicator -->
+        <span id="offlineStatusBadge" class="hidden text-[10px] bg-rose-500 text-white font-bold px-2 py-1 rounded-full flex items-center gap-1">
+          <i class="fa-solid fa-wifi-slash"></i> Offline
+        </span>
+
+        <button id="adminNavBtn" onclick="toggleAdminView()" class="text-xs bg-indigo-950/60 hover:bg-indigo-950 text-indigo-100 font-medium px-3 py-2 rounded-xl border border-indigo-500/30 transition shadow-sm flex items-center gap-1.5">
+          <i class="fa-solid fa-user-shield text-amber-400"></i>
+          <span id="adminNavText" class="hidden sm:inline">Admin Login</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="max-w-4xl mx-auto px-4 sm:px-6 py-8 flex-1 w-full">
+
+    <!-- USER VIEW -->
+    <section id="userSection" class="space-y-6">
+      
+      <!-- Search Input Box Card -->
+      <div class="bg-card bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-sm border border-slate-200/80 dark:border-slate-700">
+        <label for="searchInput" class="block text-sm font-bold text-main text-slate-700 dark:text-slate-200 mb-3">
+          <i class="fa-solid fa-magnifying-glass text-indigo-600 dark:text-indigo-400 mr-1.5"></i> ရှာဖွေလိုသော စကားလုံး သို့မဟုတ် အကြောင်းအရာကို ရိုက်ထည့်ပါ
+        </label>
+        <div class="relative">
+          <input type="text" id="searchInput" oninput="handleSearch()" placeholder="ဥပမာ - ဗက်သလီဟင်၊ ဒါဝိဒ်..." 
+                 class="w-full pl-12 pr-10 py-3.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-indigo-500 text-slate-800 dark:text-slate-100 text-base outline-none transition shadow-inner">
+          <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-lg"></i>
+          <button id="clearSearchBtn" onclick="clearSearch()" class="hidden absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition">
+            <i class="fa-solid fa-circle-xmark text-xl"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Search Results List -->
+      <div id="resultsArea" class="hidden space-y-3">
+        <div class="flex justify-between items-center text-xs text-sub text-slate-500 dark:text-slate-400 px-2 font-semibold">
+          <span>ရှာဖွေတွေ့ရှိချက်များ (<span id="resultCount" class="text-indigo-600 dark:text-indigo-400 font-bold">0</span>)</span>
+        </div>
+        <div id="searchResultsList" class="space-y-3">
+          <!-- Dynamically populated title cards -->
+        </div>
+      </div>
+
+      <!-- Initial State Prompt -->
+      <div id="emptySearchState" class="text-center py-16 px-4 bg-card bg-white/70 dark:bg-slate-800/70 backdrop-blur rounded-3xl border border-dashed border-slate-300 dark:border-slate-700">
+        <div class="w-16 h-16 bg-indigo-50 dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl shadow-sm">
+          <i class="fa-solid fa-book-open"></i>
+        </div>
+        <h3 class="text-lg font-bold text-main text-slate-800 dark:text-slate-100 mb-1">အဘိဓာန်တွင် ရှာဖွေပါ</h3>
+        <p class="text-xs sm:text-sm text-sub text-slate-500 dark:text-slate-400 max-w-sm mx-auto">အထက်ပါ Search Bar တွင် သိရှိလိုသော ခေါင်းစဉ် သို့မဟုတ် စကားလုံးကို ရိုက်ထည့်၍ ရှာဖွေနိုင်ပါသည်။ (Offline လည်း အလုပ်လုပ်ပါသည်။)</p>
+      </div>
+
+      <!-- No Match Found State -->
+      <div id="noResultsState" class="hidden text-center py-16 px-4 bg-card bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700">
+        <div class="w-16 h-16 bg-amber-50 dark:bg-amber-900/30 text-amber-500 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl">
+          <i class="fa-solid fa-magnifying-glass-minus"></i>
+        </div>
+        <h3 class="text-base font-bold text-main text-slate-800 dark:text-slate-200">ရှာဖွေမှု မတွေ့ရှိပါ။</h3>
+        <p class="text-xs text-sub text-slate-500 dark:text-slate-400 mt-1">အခြား စကားလုံးများဖြင့် ထပ်မံ ရှာဖွေကြည့်ပါ။</p>
+      </div>
+
+    </section>
+
+    <!-- ADMIN PANEL SECTION -->
+    <section id="adminSection" class="hidden space-y-6">
+      
+      <!-- Admin Login Form -->
+      <div id="adminLoginForm" class="max-w-sm mx-auto bg-card bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-xl border border-slate-200 dark:border-slate-700">
+        <h2 class="text-lg font-bold text-main text-slate-800 dark:text-slate-100 mb-4 flex items-center gap-2">
+          <i class="fa-solid fa-shield-halved text-indigo-600 dark:text-indigo-400"></i> Admin Login
+        </h2>
+        <form onsubmit="handleAdminLogin(event)" class="space-y-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Admin Password</label>
+            <input type="password" id="adminPasswordInput" placeholder="Password ရိုက်ထည့်ပါ" required 
+                   class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+          </div>
+          <p id="loginErrorMsg" class="text-xs text-rose-500 hidden font-medium"></p>
+          <button type="submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl transition shadow">
+            Login ဝင်မည်
+          </button>
+        </form>
+      </div>
+
+      <!-- Admin Dashboard -->
+      <div id="adminDashboard" class="hidden space-y-6">
+        
+        <!-- Action Header -->
+        <div class="flex flex-wrap justify-between items-center gap-4 bg-gradient-to-r from-indigo-50 to-slate-100 dark:from-slate-800 dark:to-slate-800 p-5 rounded-2xl border border-indigo-100 dark:border-slate-700 shadow-sm">
+          <div>
+            <span class="text-xs text-indigo-600 dark:text-indigo-400 font-bold uppercase tracking-wider">Control Panel</span>
+            <h2 class="text-lg font-bold text-slate-900 dark:text-slate-100">အဘိဓာန် Data စီမံခန့်ခွဲမှု</h2>
+          </div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <button onclick="autoUpload20Words()" id="autoUploadBtn" class="text-xs bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-3.5 py-2 rounded-xl transition shadow-sm flex items-center gap-1.5 cursor-pointer">
+              <i class="fa-solid fa-cloud-arrow-up"></i> <span id="autoUploadBtnText">Auto Upload (၂၀ ပုဒ်)</span>
+            </button>
+            <button onclick="openPasswordChangeModal()" class="text-xs bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-bold px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 transition shadow-sm flex items-center gap-1.5">
+              <i class="fa-solid fa-key text-amber-500"></i> Password ပြောင်းမည်
+            </button>
+            <button onclick="logoutAdmin()" class="text-xs bg-rose-600 hover:bg-rose-700 text-white font-bold px-3.5 py-2 rounded-xl transition shadow-sm flex items-center gap-1.5">
+              <i class="fa-solid fa-right-from-bracket"></i> ထွက်မည်
+            </button>
+          </div>
+        </div>
+
+        <!-- Add / Edit Form Card -->
+        <div class="bg-card bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700">
+          <h3 id="formTitle" class="text-base font-bold text-main text-slate-800 dark:text-slate-100 mb-4 pb-3 border-b border-slate-100 dark:border-slate-700 flex items-center gap-2">
+            <i class="fa-solid fa-plus-circle text-indigo-600 dark:text-indigo-400"></i> Data အသစ် ထည့်သွင်းရန်
+          </h3>
+          
+          <form id="dictionaryForm" onsubmit="handleFormSubmit(event)" class="space-y-4">
+            <input type="hidden" id="editEntryId" value="">
+            
+            <div>
+              <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">ခေါင်းစဉ် (Title) *</label>
+              <input type="text" id="inputTitle" required placeholder="ဥပမာ - ဗက်သလီဟင်" 
+                     class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">ပုံ URL (Image URL)</label>
+              <input type="url" id="imageUrl" placeholder="https://example.com/image.jpg" 
+                     class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">အဓိပ္ပာယ်ရှင်းလင်းချက် (Meaning) *</label>
+              <textarea id="inputMeaning" rows="5" required placeholder="အသေးစိတ် အဓိပ္ပာယ် ရေးသားပါ..." 
+                        class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none resize-none"></textarea>
+            </div>
+
+            <div class="flex items-center gap-3 pt-2">
+              <button type="submit" id="submitFormBtn" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-4 rounded-xl text-sm transition shadow">
+                <i class="fa-solid fa-cloud-arrow-up mr-1.5"></i> Upload ပြုလုပ်မည်
+              </button>
+              <button type="button" id="cancelEditBtn" onclick="resetForm()" class="hidden bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold py-2.5 px-4 rounded-xl text-sm transition">
+                မလုပ်တော့ပါ
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Database Entry List for Admin -->
+        <div class="bg-card bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700">
+          <h3 class="text-base font-bold text-main text-slate-800 dark:text-slate-100 mb-4 flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-3">
+            <span><i class="fa-solid fa-database text-indigo-600 dark:text-indigo-400 mr-2"></i> ရှိနှင့်ပြီးသား Data စာရင်း</span>
+            <span id="adminDataCount" class="text-xs font-bold bg-indigo-50 dark:bg-slate-700 text-indigo-700 dark:text-indigo-300 px-3 py-1 rounded-full">စုစုပေါင်း: 0</span>
+          </h3>
+
+          <div id="adminDataList" class="space-y-3 max-h-96 overflow-y-auto pr-1">
+            <!-- Dynamically populated admin list items -->
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Detail Modal View -->
+  <div id="detailModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-card bg-white dark:bg-slate-800 rounded-3xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-hidden border border-slate-100 dark:border-slate-700 flex flex-col relative transform transition-all">
+      
+      <!-- Modal Header -->
+      <div class="p-5 bg-gradient-to-r from-indigo-50 to-white dark:from-slate-800 dark:to-slate-800 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
+        <div class="flex items-center gap-3 pr-8">
+          <h2 id="modalTitle" class="text-2xl font-bold text-indigo-950 dark:text-indigo-300 leading-snug"></h2>
+          <!-- Sound Icon for Text-To-Speech -->
+          <button onclick="speakTitle()" class="w-9 h-9 bg-indigo-100 dark:bg-slate-700 hover:bg-indigo-200 dark:hover:bg-slate-600 text-indigo-700 dark:text-indigo-300 rounded-full flex items-center justify-center transition shadow-sm" title="အသံထွက်နားထောင်မည်">
+            <i class="fa-solid fa-volume-high text-sm"></i>
+          </button>
+        </div>
+        <button onclick="closeModal()" class="w-9 h-9 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 rounded-full flex items-center justify-center transition flex-shrink-0">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-6 overflow-y-auto space-y-4">
+        <div id="modalImageContainer" class="hidden w-full h-56 rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-inner">
+          <img id="modalImage" src="" alt="Detail Image" class="w-full h-full object-cover">
+        </div>
+
+        <div id="modalMeaning" class="text-main text-slate-700 dark:text-slate-200 text-base leading-relaxed whitespace-pre-line"></div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-4 bg-slate-50 dark:bg-slate-900 border-t border-slate-100 dark:border-slate-700 flex justify-between items-center text-xs text-sub text-slate-400 dark:text-slate-500">
+        <span><i class="fa-solid fa-lightbulb text-amber-500 mr-1"></i> အရောင်မောင်းထားသော စကားလုံးများကို နှိပ်ပါ</span>
+        <button onclick="closeModal()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold transition">
+          ပိတ်မည်
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Change Password Modal -->
+  <div id="passwordModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-card bg-white dark:bg-slate-800 rounded-3xl shadow-2xl max-w-sm w-full p-6 relative border border-slate-200 dark:border-slate-700">
+      <h3 class="text-base font-bold text-main text-slate-800 dark:text-slate-100 mb-4 flex items-center gap-2">
+        <i class="fa-solid fa-key text-amber-500"></i> Admin Password ပြောင်းလဲရန်
+      </h3>
+      <form onsubmit="handleChangePassword(event)" class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Password အဟောင်း</label>
+          <input type="password" id="oldPasswordInput" required class="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Password အသစ်</label>
+          <input type="password" id="newPasswordInput" required class="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <p id="passErrorMsg" class="text-xs text-rose-500 hidden font-medium"></p>
+        <div class="flex gap-2 pt-2">
+          <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 text-sm rounded-xl transition">
+            သိမ်းဆည်းမည်
+          </button>
+          <button type="button" onclick="closePasswordModal()" class="bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold px-4 py-2 text-sm rounded-xl transition">
+            မလုပ်တော့ပါ
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- JavaScript App Logic -->
+  <script>
+    // 1. Firebase Configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyCm58n2cdTxogjWFGqyP0b5JS-hzt7c77c",
+      authDomain: "mmbbdictionary.firebaseapp.com",
+      databaseURL: "https://mmbbdictionary.firebaseio.com",
+      projectId: "mmbbdictionary",
+      storageBucket: "mmbbdictionary.firebasestorage.app",
+      messagingSenderId: "421010578285",
+      appId: "1:421010578285:web:f8863c02983d470038d864"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const dictionaryRef = db.ref('dictionary');
+    const settingsRef = db.ref('settings');
+
+    // App State
+    let dictionaryData = {};
+    let isAdminLoggedIn = false;
+    let currentAdminPassword = "iamo";
+    let currentTheme = localStorage.getItem('appTheme') || 'light';
+
+    // Offline Service Worker & LocalStorage Cache Setup
+    if ('serviceWorker' in navigator) {
+      const swCode = `
+        const CACHE_NAME = 'mm-bible-dict-v1';
+        self.addEventListener('install', e => e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(['/']))));
+        self.addEventListener('fetch', e => e.respondWith(caches.match(e.request).then(r => r || fetch(e.request).catch(() => caches.match('/')))));
+      `;
+      const blob = new Blob([swCode], { type: 'text/javascript' });
+      navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(() => {});
+    }
+
+    // Monitor Online/Offline Status
+    function updateOnlineStatus() {
+      const badge = document.getElementById('offlineStatusBadge');
+      if (!navigator.onLine) {
+        badge.classList.remove('hidden');
+      } else {
+        badge.classList.add('hidden');
+      }
+    }
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+
+    // Initialize App & Sync Data with Offline Backup
+    window.addEventListener('DOMContentLoaded', () => {
+      updateOnlineStatus();
+      setTheme(currentTheme);
+
+      // Load cached offline data first
+      const cachedDict = localStorage.getItem('cached_dictionary');
+      if (cachedDict) {
+        try {
+          dictionaryData = JSON.parse(cachedDict);
+          updateAdminDataList();
+        } catch (e) {}
+      }
+
+      const cachedPwd = localStorage.getItem('cached_admin_pwd');
+      if (cachedPwd) currentAdminPassword = cachedPwd;
+
+      // Sync Admin Password from Firebase
+      settingsRef.child('adminPassword').on('value', (snapshot) => {
+        if (snapshot.exists()) {
+          currentAdminPassword = snapshot.val();
+          localStorage.setItem('cached_admin_pwd', currentAdminPassword);
+        }
+      });
+
+      // Sync Dictionary Data from Realtime Database & Backup LocalStorage
+      dictionaryRef.on('value', (snapshot) => {
+        dictionaryData = snapshot.val() || {};
+        localStorage.setItem('cached_dictionary', JSON.stringify(dictionaryData));
+        updateAdminDataList();
+        
+        const searchVal = document.getElementById('searchInput').value.trim();
+        if (searchVal.length > 0) {
+          handleSearch();
+        }
+      });
+    });
+
+    // Theme Switcher Engine (Light, Dark, Sepia/Reading Mode)
+    function setTheme(theme) {
+      currentTheme = theme;
+      localStorage.setItem('appTheme', theme);
+      
+      const body = document.getElementById('appBody');
+      const btnLight = document.getElementById('btnThemeLight');
+      const btnDark = document.getElementById('btnThemeDark');
+      const btnSepia = document.getElementById('btnThemeSepia');
+
+      // Reset classes
+      body.classList.remove('dark', 'theme-sepia');
+      [btnLight, btnDark, btnSepia].forEach(b => b.classList.remove('bg-indigo-700', 'bg-slate-700', 'bg-amber-800'));
+
+      if (theme === 'dark') {
+        body.classList.add('dark');
+        btnDark.classList.add('bg-slate-700');
+      } else if (theme === 'sepia') {
+        body.classList.add('theme-sepia');
+        btnSepia.classList.add('bg-amber-800');
+      } else {
+        btnLight.classList.add('bg-indigo-700');
+      }
+    }
+
+    // Toggle Views
+    function toggleAdminView() {
+      const userSec = document.getElementById('userSection');
+      const adminSec = document.getElementById('adminSection');
+      const navText = document.getElementById('adminNavText');
+
+      if (adminSec.classList.contains('hidden')) {
+        userSec.classList.add('hidden');
+        adminSec.classList.remove('hidden');
+        navText.innerText = "User View";
+      } else {
+        adminSec.classList.add('hidden');
+        userSec.classList.remove('hidden');
+        navText.innerText = isAdminLoggedIn ? "Admin Panel" : "Admin Login";
+      }
+    }
+
+    // Admin Authentication
+    function handleAdminLogin(e) {
+      e.preventDefault();
+      const pwd = document.getElementById('adminPasswordInput').value;
+      const errorMsg = document.getElementById('loginErrorMsg');
+
+      if (pwd === currentAdminPassword) {
+        isAdminLoggedIn = true;
+        document.getElementById('adminLoginForm').classList.add('hidden');
+        document.getElementById('adminDashboard').classList.remove('hidden');
+        document.getElementById('adminPasswordInput').value = '';
+        errorMsg.classList.add('hidden');
+        document.getElementById('adminNavText').innerText = "Admin Panel";
+      } else {
+        errorMsg.innerText = "Password မှားယွင်းနေပါသည်။";
+        errorMsg.classList.remove('hidden');
+      }
+    }
+
+    function logoutAdmin() {
+      isAdminLoggedIn = false;
+      document.getElementById('adminDashboard').classList.add('hidden');
+      document.getElementById('adminLoginForm').classList.remove('hidden');
+      document.getElementById('adminNavText').innerText = "Admin Login";
+      toggleAdminView();
+    }
+
+    // Handle Form Submit (Add & Edit)
+    function handleFormSubmit(e) {
+      e.preventDefault();
+      
+      const editId = document.getElementById('editEntryId').value;
+      const title = document.getElementById('inputTitle').value.trim();
+      const imageUrl = document.getElementById('imageUrl').value.trim();
+      const meaning = document.getElementById('inputMeaning').value.trim();
+
+      const payload = {
+        title: title,
+        imageUrl: imageUrl,
+        meaning: meaning,
+        updatedAt: firebase.database.ServerValue.TIMESTAMP
+      };
+
+      if (!navigator.onLine) {
+        alert("Offline ဖြစ်နေချိန်တွင် Data ပြင်ဆင်/ထည့်သွင်းခြင်း ပြုလုပ်၍မရပါ။");
+        return;
+      }
+
+      if (editId) {
+        dictionaryRef.child(editId).update(payload)
+          .then(() => {
+            alert('အချက်အလက် ပြင်ဆင်ပြီးပါပြီ!');
+            resetForm();
+          })
+          .catch((err) => alert('Error: ' + err.message));
+      } else {
+        dictionaryRef.push(payload)
+          .then(() => {
+            alert('အသစ် ထည့်သွင်းပြီးပါပြီ!');
+            resetForm();
+          })
+          .catch((err) => alert('Error: ' + err.message));
+      }
+    }
+
+    // Auto Upload 20 Words function
+    function autoUpload20Words() {
+      const btn = document.getElementById('autoUploadBtn');
+      const btnText = document.getElementById('autoUploadBtnText');
+      if (!navigator.onLine) {
+        alert("Offline ဖြစ်နေချိန်တွင် Upload ပြုလုပ်၍မရပါ။");
+        return;
+      }
+
+      btn.disabled = true;
+      btnText.innerText = "Upload လုပ်နေပါသည်...";
+
+      fetch("https://mmbbdictionary.firebaseio.com/dictionary.json")
+        .then(r => r.json())
+        .then(currentDb => {
+          const existingTitles = new Set(
+            Object.values(currentDb || {})
+              .filter(x => x && x.title)
+              .map(x => x.title.trim().toLowerCase())
+          );
+
+          // 20 Candidate words
+          const candidates = [
+            { title: "ဟေရှာယ", meaning: "ဟေရှာယ (Isaiah the Prophet)\n * မူရင်း: Yeshayahu (ထာဝရဘုရားသည် ကယ်တင်ခြင်းဖြစ်တော်မူ၏)\n * အဓိပ္ပာယ်ရှင်းလင်းချက်: ဧမာနွေလနှင့် ကယ်တင်ရှင် ယေရှုခရစ်တော် ဆင်းရဲဒုက္ခခံအစေခံအဖြစ် အသေခံတော်မူမည့်အကြောင်း အတိကျဆုံး ကြိုတင်ဟောခဲ့သော ပရောဖက်ကြီး ဖြစ်သည်။\n * ကျမ်းစာကိုးကား: ဟေရှာယ ၇:၁၄၊ ဟေရှာယ ၅၃:၅" },
+            { title: "ယေရမိ", meaning: "ယေရမိ (Jeremiah the Prophet)\n * မူရင်း: Yirmeyahu\n * အဓိပ္ပာယ်ရှင်းလင်းချက်: မျက်ရည်ကျသော ပရောဖက်ကြီးဖြစ်ပြီး ပဋိညာဉ်သစ် ဖွဲ့မည့်အကြောင်း ပရောဖက်ပြုခဲ့သူ ဖြစ်သည်။\n * ကျမ်းစာကိုးကား: ယေရမိ ၃၁:၃၁-၃၃၊ ယေရမိ ၂၉:၁၁" },
+            { title: "ယေဇကျေလ", meaning: "ယေဇကျေလ (Ezekiel the Prophet)\n * မူရင်း: Yechezkel\n * အဓိပ္ပာယ်ရှင်းလင်းချက်: ဗာဗုလုန်သုံ့ပန်းဘဝ၌ ဘုရားသခင်၏ ဘုန်းတော်နှင့် ခြောက်သွေ့သောအရိုးများ အသက်ရှင်လာသော ရူပါရုံကို မြင်တွေ့ခဲ့ရသူ ဖြစ်သည်။\n * ကျမ်းစာကိုးကား: ယေဇကျေလ ၃၇:၁-၁၄" },
+            { title: "ဧသတာ", meaning: "ဧသတာ (Queen Esther)\n * မူရင်း: Hadassah / Esther\n * အဓိပ္ပာယ်ရှင်းလင်းချက်: ပါရှားမိဖုရားခေါင်ကြီးဖြစ်ပြီး မိမိလူမျိုး မျိုးဖြုတ်သတ်ခံရမည့်ဘေးမှ အသက်စွန့် ကယ်တင်ခဲ့သူ ဖြစ်သည်။\n * ကျမ်းစာကိုးကား: ဧသတာ ၄:၁၄-၁၆" },
+            { title: "ယောဘ", meaning: "ယောဘ (Job)\n * မူရင်း: Iyyov\n * အဓိပ္ပာယ်ရှင်းလင်းချက်: ကြီးစွာသော စုံစမ်းဒုက္ခများကြား၌ပင် ဘုရားသခင်အား နှုတ်ဖြင့်မပြစ်မှားဘဲ သစ္စာစောင့်သိခဲ့သူ ဖြစ်သည်။\n * ကျမ်းစာကိုးကား: ယောဘ ၁:၂၁၊ ယောဘ ၁၉:၂၅" },
+            { title: "တိမောသေ", meaning: "တိမောသေ (Timothy)\n * မူရင်း: Timotheos\n * အဓိပ္ပာယ်ရှင်းလင်းချက်: တမန်တော်ပေါလု၏ ဝိညာဉ်ရေးရာသားစစ်ဖြစ်ပြီး ဧဖက်အသင်းတော်၏ သင်းအုပ်ဆရာ ဖြစ်သည်။\n * ကျမ်းစာကိုးကား: ၁ တိမောသေ ၄:၁၂" },
+            { title: "ဗာနဗ", meaning: "ဗာနဗ (Barnabas)\n * မူရင်း: Bar-Neva (အားပေးသက်သာခြင်း၏ သား)\n * အဓိပ္ပာယ်ရှင်းလင်းချက်: ပေါလုကို အသင်းတော်နှင့် မိတ်ဆက်ပေးခဲ့ပြီး အန္တိအုတ်အသင်းတော်ကို ဦးဆောင်ခဲ့သူ ဖြစ်သည်။\n * ကျမ်းစာကိုးကား: တမန်တော် ၁၁:၂၄" },
+            { title: "သိလ", meaning: "သိလ (Silas)\n * မူရင်း: Silas / Silvanus\n * အဓိပ္ပာယ်ရှင်းလင်းချက်: ဖိလိပ္ပိထောင်ထဲ၌ ပေါလုနှင့်အတူ သန်းခေါင်ယံအချိန် ချီးမွမ်းဆုတောင်းခဲ့သူ ဖြစ်သည်။\n * ကျမ်းစာကိုးကား: တမန်တော် ၁၆:၂၅-၃၄" },
+            { title: "ဧလိရှဲ", meaning: "ဧလိရှဲ (Elisha the Prophet)\n * မူရင်း: Elisha\n * အဓိပ္ပာယ်ရှင်းလင်းချက်: ဧလိယ၏ တပည့်ဖြစ်ပြီး ဝိညာဉ်တော်ဆုကျေးဇူး နှစ်ဆခံစားကာ အံ့ဖွယ်တန်ခိုးများစွာ ပြုခဲ့သူ ဖြစ်သည်။\n * ကျမ်းစာကိုးကား: ၂ ရှင်ဘုရင်များ ၂:၉-၁၂" },
+            { title: "ဇာခရိ", meaning: "ဇာခရိ (Zechariah the Prophet)\n * မူရင်း: Zekharyah\n * အဓိပ္ပာယ်ရှင်းလင်းချက်: ဗိမာန်တော်တည်ဆောက်ရေးကို အားပေးခဲ့ပြီး မေရှိယခရစ်တော် ကြွလာမည့်အကြောင်း ပရောဖက်ပြုခဲ့သူ ဖြစ်သည်။\n * ကျမ်းစာကိုးကား: ဇာခရိ ၉:၉" },
+            { title: "ရှောလု", meaning: "ရှောလု (King Saul)\n * မူရင်း: Sha'ul\n * အဓိပ္ပာယ်ရှင်းလင်းချက်: ဣသရေလနိုင်ငံ၏ ပထမဆုံးသော ဘုရင်ဖြစ်ပြီး နာမခံမှုကြောင့် ပလ္လင်ဆုံးရှုံးခဲ့ရသူ ဖြစ်သည်။\n * ကျမ်းစာကိုးကား: ၁ ဓမ္မရာဇဝင် ၁၅:၂၂" },
+            { title: "ဧဖက်", meaning: "ဧဖက် (Ephesus)\n * မူရင်း: Ephesos\n * အဓိပ္ပာယ်ရှင်းလင်းချက်: ပေါလု ၃ နှစ်ကြာ ဧဝံဂေလိဟောကြားခဲ့ရာ မဟာဆိပ်ကမ်းမြို့တော် ဖြစ်သည်။\n * ကျမ်းစာကိုးကား: တမန်တော် ၁၉၊ ဧဖက်ကျမ်း" },
+            { title: "ကောရိန္သု", meaning: "ကောရိန္သု (Corinth)\n * မူရင်း: Korinthos\n * အဓိပ္ပာယ်ရှင်းလင်းချက်: ပေါလု အသင်းတော်တည်ထောင်ခဲ့ရာနှင့် မေတ္တာတရားအခန်းကြီးကို ရေးသားခဲ့သည့် မြို့တော် ဖြစ်သည်။\n * ကျမ်းစာကိုးကား: ၁ ကောရိန္သု ၁၃" },
+            { title: "သုတ္တံကျမ်း", meaning: "သုတ္တံကျမ်း (Proverbs)\n * မူရင်း: Mishlei\n * အဓိပ္ပာယ်ရှင်းလင်းချက်: ထာဝရဘုရားကို ကြောက်ရွံ့ရိုသေခြင်းသည် ဉာဏ်ပညာ၏ အစအဦးဖြစ်ကြောင်း သွန်သင်သော ဉာဏ်ပညာလမ်းညွှန်ကျမ်း ဖြစ်သည်။\n * ကျမ်းစာကိုးကား: သုတ္တံ ၁:၇၊ သုတ္တံ ၃:၅-၆" },
+            { title: "ဒေသနာကျမ်း", meaning: "ဒေသနာကျမ်း (Ecclesiastes)\n * မူရင်း: Qoheleth\n * အဓိပ္ပာယ်ရှင်းလင်းချက်: နေအောက်၌ အရာရာသည် အချည်းနှီးဖြစ်ပြီး ဘုရားသခင်ကို ကြောက်ရွံ့ရိုသေခြင်းသာ အဓိကဖြစ်ကြောင်း ပြဆိုသောကျမ်း ဖြစ်သည်။\n * ကျမ်းစာကိုးကား: ဒေသနာ ၁၂:၁၃" },
+            { title: "ဗျာဒိတ်ကျမ်း", meaning: "ဗျာဒိတ်ကျမ်း (Book of Revelation)\n * မူရင်း: Apokalypsis\n * အဓိပ္ပာယ်ရှင်းလင်းချက်: သမ္မာကျမ်းစာ၏ နောက်ဆုံးကျမ်းဖြစ်ပြီး ခရစ်တော်၏ အောင်ပွဲနှင့် ကောင်းကင်ယေရုရှလင်မြို့သစ်ကို ဖော်ပြထားသည်။\n * ကျမ်းစာကိုးကား: ဗျာဒိတ် ၂၁:၄" },
+            { title: "ရောမမြို့", meaning: "ရောမမြို့ (Rome)\n * မူရင်း: Rhome\n * အဓိပ္ပာယ်ရှင်းလင်းချက်: ရှေးရောမအင်ပါယာ မြို့တော်ဖြစ်ပြီး တမန်တော်ပေါလုနှင့် ပေတရုတို့ အာဇာနည်ခံခဲ့ရာ အရပ် ဖြစ်သည်။\n * ကျမ်းစာကိုးကား: တမန်တော် ၂၈:၃၀-၃၁" },
+            { title: "မီးတိုင်", meaning: "မီးတိုင် / ရွှေမီးခုံ (Menorah)\n * မူရင်း: Menorah\n * အဓိပ္ပာယ်ရှင်းလင်းချက်: သန့်ရှင်းရာဌာနတွင်း အလင်းပေးသော ၇ ခက်ပါ ရွှေမီးခုံဖြစ်ပြီး လောက၏အလင်း ခရစ်တော်ကို ပုံဆောင်သည်။\n * ကျမ်းစာကိုးကား: ထွက်မြောက်ရာ ၂၅:၃၁-၄၀" },
+            { title: "နံ့သာပေါင်းပလ္လင်", meaning: "နံ့သာပေါင်းပလ္လင် (Altar of Incense)\n * မူရင်း: Mizbeach HaKetoret\n * အဓိပ္ပာယ်ရှင်းလင်းချက်: သန့်ရှင်းသူတို့၏ ဆုတောင်းသံနှင့် ခရစ်တော်၏ ကြားဝင်ဖျန်ဖြေခြင်းကို ပုံဆောင်သော ရွှေယဇ်ပလ္လင် ဖြစ်သည်။\n * ကျမ်းစာကိုးကား: ထွက်မြောက်ရာ ၃၀:၁-၁၀၊ ဆာလံ ၁၄၁:၂" },
+            { title: "သက်တန့်", meaning: "သက်တန့် (Rainbow / Sign of Covenant)\n * မူရင်း: Qeshet\n * အဓိပ္ပာယ်ရှင်းလင်းချက်: ရေလွှမ်းမိုးခြင်းဖြင့် ကမ္ဘာကို နောက်နောင် မဖျက်ဆီးတော့မည့် ဘုရားသခင်၏ သစ္စာပဋိညာဉ် အမှတ်အသား ဖြစ်သည်။\n * ကျမ်းစာကိုးကား: ကမ္ဘာဦး ၉:၁၂-၁၇" }
+          ];
+
+          let added = 0;
+          const promises = [];
+          for (let item of candidates) {
+            if (!existingTitles.has(item.title.trim().toLowerCase())) {
+              promises.push(
+                dictionaryRef.push({
+                  title: item.title,
+                  meaning: item.meaning,
+                  imageUrl: "",
+                  updatedAt: firebase.database.ServerValue.TIMESTAMP
+                })
+              );
+              added++;
+            }
+          }
+
+          Promise.all(promises)
+            .then(() => {
+              btn.disabled = false;
+              btnText.innerText = "Upload ပြီးပါပြီ (" + added + " ပုဒ်)!";
+              setTimeout(() => { btnText.innerText = "Auto Upload (၂၀ ပုဒ်)"; }, 3000);
+            })
+            .catch(err => {
+              btn.disabled = false;
+              btnText.innerText = "Auto Upload (၂၀ ပုဒ်)";
+              alert("Error: " + err.message);
+            });
+        });
+    }
+
+    function resetForm() {
+      document.getElementById('dictionaryForm').reset();
+      document.getElementById('editEntryId').value = '';
+      document.getElementById('formTitle').innerHTML = `<i class="fa-solid fa-plus-circle text-indigo-600 dark:text-indigo-400"></i> Data အသစ် ထည့်သွင်းရန်`;
+      document.getElementById('submitFormBtn').innerHTML = `<i class="fa-solid fa-cloud-arrow-up mr-1.5"></i> Upload ပြုလုပ်မည်`;
+      document.getElementById('cancelEditBtn').classList.add('hidden');
+    }
+
+    // Edit Existing Data
+    function editEntry(key) {
+      const item = dictionaryData[key];
+      if (!item) return;
+
+      document.getElementById('editEntryId').value = key;
+      document.getElementById('inputTitle').value = item.title || '';
+      document.getElementById('imageUrl').value = item.imageUrl || '';
+      document.getElementById('inputMeaning').value = item.meaning || '';
+
+      document.getElementById('formTitle').innerHTML = `<i class="fa-solid fa-pen-to-square text-amber-500"></i> Data ပြင်ဆင်ရန်`;
+      document.getElementById('submitFormBtn').innerHTML = `<i class="fa-solid fa-floppy-disk mr-1.5"></i> ပြင်ဆင်ချက် သိမ်းမည်`;
+      document.getElementById('cancelEditBtn').classList.remove('hidden');
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Delete Data
+    function deleteEntry(key) {
+      if (!navigator.onLine) {
+        alert("Offline ဖြစ်နေချိန်တွင် Data ဖျက်ခြင်း ပြုလုပ်၍မရပါ။");
+        return;
+      }
+      if (confirm('ဤအချက်အလက်ကို ဖျက်ရန် သေချာပါသလား?')) {
+        dictionaryRef.child(key).remove();
+      }
+    }
+
+    // Admin List Generator
+    function updateAdminDataList() {
+      const listContainer = document.getElementById('adminDataList');
+      const countEl = document.getElementById('adminDataCount');
+      const keys = Object.keys(dictionaryData);
+      
+      countEl.innerText = `စုစုပေါင်း: ${keys.length}`;
+      listContainer.innerHTML = '';
+
+      if (keys.length === 0) {
+        listContainer.innerHTML = `<p class="text-xs text-slate-400 text-center py-6">Data တစ်စုံတစ်ရာ မရှိသေးပါ။</p>`;
+        return;
+      }
+
+      keys.forEach((key) => {
+        const item = dictionaryData[key];
+        const div = document.createElement('div');
+        div.className = 'flex justify-between items-center bg-slate-50 dark:bg-slate-900 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-700 hover:border-indigo-200 transition';
+        div.innerHTML = `
+          <div class="flex items-center gap-3 overflow-hidden pr-2">
+            ${item.imageUrl ? `<img src="${item.imageUrl}" class="w-10 h-10 object-cover rounded-xl flex-shrink-0">` : '<div class="w-10 h-10 bg-indigo-100 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 rounded-xl flex items-center justify-center flex-shrink-0 font-bold"><i class="fa-solid fa-font text-sm"></i></div>'}
+            <div class="truncate">
+              <h4 class="text-sm font-bold text-main text-slate-800 dark:text-slate-100 truncate">${escapeHtml(item.title)}</h4>
+              <p class="text-xs text-sub text-slate-500 dark:text-slate-400 truncate">${escapeHtml(item.meaning)}</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-1 flex-shrink-0">
+            <button onclick="editEntry('${key}')" class="p-2 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-slate-800 rounded-xl transition" title="ပြင်မည်">
+              <i class="fa-solid fa-pen"></i>
+            </button>
+            <button onclick="deleteEntry('${key}')" class="p-2 text-rose-600 hover:bg-rose-100 dark:hover:bg-slate-800 rounded-xl transition" title="ဖျက်မည်">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </div>
+        `;
+        listContainer.appendChild(div);
+      });
+    }
+
+    // User Search Engine
+    function handleSearch() {
+      const query = document.getElementById('searchInput').value.trim().toLowerCase();
+      const resultsArea = document.getElementById('resultsArea');
+      const resultsList = document.getElementById('searchResultsList');
+      const emptyState = document.getElementById('emptySearchState');
+      const noResultsState = document.getElementById('noResultsState');
+      const resultCount = document.getElementById('resultCount');
+      const clearBtn = document.getElementById('clearSearchBtn');
+
+      if (query.length > 0) {
+        clearBtn.classList.remove('hidden');
+        emptyState.classList.add('hidden');
+      } else {
+        clearBtn.classList.add('hidden');
+        emptyState.classList.remove('hidden');
+        resultsArea.classList.add('hidden');
+        noResultsState.classList.add('hidden');
+        return;
+      }
+
+      resultsList.innerHTML = '';
+      let matchCount = 0;
+
+      Object.keys(dictionaryData).forEach((key) => {
+        const item = dictionaryData[key];
+        const titleMatch = item.title && item.title.toLowerCase().includes(query);
+        const meaningMatch = item.meaning && item.meaning.toLowerCase().includes(query);
+
+        if (titleMatch || meaningMatch) {
+          matchCount++;
+          const card = document.createElement('div');
+          card.className = 'w-full bg-card bg-white dark:bg-slate-800 p-4 sm:p-5 rounded-2xl border border-slate-200/90 dark:border-slate-700 shadow-sm hover:shadow-md hover:border-indigo-300 transition cursor-pointer flex justify-between items-center group';
+          card.onclick = () => openModal(key);
+          card.innerHTML = `
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition">
+                <i class="fa-solid fa-book-bookmark text-sm"></i>
+              </div>
+              <span class="text-base font-bold text-main text-slate-800 dark:text-slate-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition">
+                ${escapeHtml(item.title)}
+              </span>
+            </div>
+            <i class="fa-solid fa-chevron-right text-xs text-slate-300 dark:text-slate-600 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 group-hover:translate-x-1 transition"></i>
+          `;
+          resultsList.appendChild(card);
+        }
+      });
+
+      resultCount.innerText = matchCount;
+
+      if (matchCount > 0) {
+        resultsArea.classList.remove('hidden');
+        noResultsState.classList.add('hidden');
+      } else {
+        resultsArea.classList.add('hidden');
+        noResultsState.classList.remove('hidden');
+      }
+    }
+
+    function clearSearch() {
+      document.getElementById('searchInput').value = '';
+      handleSearch();
+    }
+
+    function resetSearch() {
+      if (!document.getElementById('adminSection').classList.contains('hidden')) {
+        toggleAdminView();
+      }
+      clearSearch();
+    }
+
+    // Modal Display & Dynamic Cross-Linking
+    function openModal(key) {
+      const item = dictionaryData[key];
+      if (!item) return;
+
+      document.getElementById('modalTitle').innerText = item.title;
+      
+      const imgContainer = document.getElementById('modalImageContainer');
+      const imgEl = document.getElementById('modalImage');
+      if (item.imageUrl) {
+        imgEl.src = item.imageUrl;
+        imgContainer.classList.remove('hidden');
+      } else {
+        imgContainer.classList.add('hidden');
+      }
+
+      const parsedMeaning = generateCrossLinks(item.meaning, item.title);
+      document.getElementById('modalMeaning').innerHTML = parsedMeaning;
+
+      document.getElementById('detailModal').classList.remove('hidden');
+    }
+
+    function closeModal() {
+      document.getElementById('detailModal').classList.add('hidden');
+    }
+
+    // Text To Speech
+    function speakTitle() {
+      const titleText = document.getElementById('modalTitle').innerText;
+      if (!titleText) return;
+
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(titleText);
+        utterance.lang = 'my-MM';
+        utterance.rate = 0.9;
+        window.speechSynthesis.speak(utterance);
+      } else {
+        alert("သင့် Browser သည် အသံထွက်စနစ်ကို မပံ့ပိုးပါ");
+      }
+    }
+
+    // Auto Cross-Linking Engine
+    function generateCrossLinks(meaningText, currentTitle) {
+      if (!meaningText) return '';
+
+      let processedText = escapeHtml(meaningText);
+
+      const otherTitles = Object.keys(dictionaryData)
+        .map(k => dictionaryData[k].title)
+        .filter(t => t && t.trim() !== '' && t.trim() !== currentTitle)
+        .sort((a, b) => b.length - a.length);
+
+      if (otherTitles.length === 0) return processedText;
+
+      const escapedTitles = otherTitles.map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+      const pattern = new RegExp(`(${escapedTitles.join('|')})`, 'g');
+
+      processedText = processedText.replace(pattern, (match) => {
+        const targetKey = Object.keys(dictionaryData).find(k => dictionaryData[k].title === match);
+        if (targetKey) {
+          return `<span class="cross-link" onclick="openModal('${targetKey}')">${match}</span>`;
+        }
+        return match;
+      });
+
+      return processedText;
+    }
+
+    // Password Change Functions
+    function openPasswordChangeModal() {
+      document.getElementById('passwordModal').classList.remove('hidden');
+    }
+
+    function closePasswordModal() {
+      document.getElementById('passwordModal').classList.add('hidden');
+      document.getElementById('oldPasswordInput').value = '';
+      document.getElementById('newPasswordInput').value = '';
+      document.getElementById('passErrorMsg').classList.add('hidden');
+    }
+
+    function handleChangePassword(e) {
+      e.preventDefault();
+      const oldPwd = document.getElementById('oldPasswordInput').value;
+      const newPwd = document.getElementById('newPasswordInput').value;
+      const errorMsg = document.getElementById('passErrorMsg');
+
+      if (!navigator.onLine) {
+        alert("Offline ဖြစ်နေချိန်တွင် Password ပြောင်းလဲ၍မရပါ။");
+        return;
+      }
+
+      if (oldPwd !== currentAdminPassword) {
+        errorMsg.innerText = "Password အဟောင်း မှားယွင်းနေပါသည်။";
+        errorMsg.classList.remove('hidden');
+        return;
+      }
+
+      if (newPwd.trim().length < 4) {
+        errorMsg.innerText = "Password အသစ်သည် အနည်းဆုံး ၄ လုံး ရှိရပါမည်။";
+        errorMsg.classList.remove('hidden');
+        return;
+      }
+
+      settingsRef.child('adminPassword').set(newPwd)
+        .then(() => {
+          alert("Admin Password ပြောင်းလဲပြီးပါပြီ!");
+          closePasswordModal();
+        })
+        .catch((err) => alert("Error: " + err.message));
+    }
+
+    // Utility HTML Escaper
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+    }
+  </script>
+
+</body>
+</html>
